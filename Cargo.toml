@@ -1,0 +1,9 @@
+[package]
+name = "fecs_rs"
+version = "0.1.0"
+edition = "2024"
+authors = ["Kevin Phan <kevin2006phan@gmail.com>"]
+description = "a safe and functional entity component system written in rust for game development"
+
+
+[dependencies]

@@ -1,0 +1,12 @@
+brace_style = "AlwaysNextLine"
+control_brace_style = "AlwaysNextLine"
+tab_width = 4
+
+# Sort imports alphabetically (optional, but usually helps)
+reorder_imports = true
+
+# Let rustfmt decide whether to keep a `use` on one line or break it into multiple lines
+imports_layout = "Mixed"
+
+# (Optional) Increase line width if you’re okay with longer single‐line imports
+max_width = 100
