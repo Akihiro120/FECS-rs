@@ -65,4 +65,9 @@ impl EntityManager
 
         return self.versions.get(idx).copied() == Some(ver);
     }
+
+    pub fn get_versions(&self) -> &Vec<u32>
+    {
+        &self.versions
+    }
 }

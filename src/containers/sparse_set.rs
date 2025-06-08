@@ -3,7 +3,7 @@ use crate::{
     types::{get_entity_index, Entity, NPOS, SPARSE_SET_SIZE},
 };
 
-struct SparseSet<T>
+pub struct SparseSet<T>
 {
     dense: Vec<T>,
     dense_entities: Vec<Entity>,
@@ -19,6 +19,11 @@ impl<T> SparseSet<T>
             dense_entities: Vec::new(),
             sparse: Vec::new(),
         }
+    }
+
+    pub fn get_sparse(&self) -> &Vec<Box<[u32; SPARSE_SET_SIZE]>>
+    {
+        &self.sparse
     }
 
     pub fn insert(&mut self, entity_manager: &EntityManager, e: Entity, component: T)
@@ -61,9 +66,43 @@ impl<T> SparseSet<T>
         }
     }
 
-    pub fn remove(&mut self, e: Entity)
+    pub fn remove(&mut self, e: Entity, entity_manager: &EntityManager)
     {
-        todo!()
+        if !entity_manager.is_alive(e)
+        {
+            eprintln!("Cannot assign to Dead Entity");
+        }
+
+        let idx = get_entity_index(e);
+        let last = self
+            .dense
+            .len()
+            .checked_sub(1)
+            .expect("Unsigned type is < 0");
+
+        {
+            let slot = match self.sparse_slot(idx).copied()
+            {
+                Some(s) if s != NPOS => s,
+                _ => return,
+            };
+
+            if slot as usize != last
+            {
+                self.dense.swap(slot as usize, last);
+                self.dense_entities.swap(slot as usize, last);
+
+                let entity_index = self.dense_entities[slot as usize];
+                let slot_at_entity = self.sparse_slot_mut(entity_index).unwrap();
+                *slot_at_entity = slot;
+            }
+        }
+
+        self.dense.pop();
+        self.dense_entities.pop();
+
+        let slot = self.sparse_slot_mut(idx).unwrap();
+        *slot = NPOS;
     }
 
     pub fn has(&self, e: Entity) -> bool
@@ -143,7 +182,7 @@ impl<T> SparseSet<T>
 
     pub fn reserve(&mut self, amount: usize)
     {
-        let num_pages = ((amount + SPARSE_SET_SIZE - 1) / SPARSE_SET_SIZE);
+        let num_pages = (amount + SPARSE_SET_SIZE - 1) / SPARSE_SET_SIZE;
 
         if num_pages > self.sparse.len()
         {
@@ -164,6 +203,23 @@ impl<T> SparseSet<T>
 
         self.dense.clear();
         self.dense_entities.clear();
+    }
+
+    fn sparse_slot(&mut self, idx: u32) -> Option<&u32>
+    {
+        let p: u32 = self.get_page_index(idx);
+
+        if p >= self.sparse.len() as u32
+        {
+            self.sparse
+                .resize(p as usize + 1, Box::new([NPOS; SPARSE_SET_SIZE]));
+        }
+
+        let page_index = self.get_page_offset(idx) as usize;
+        self.sparse
+            .get(p as usize)
+            .map(|page| &**page)
+            .and_then(|page| page.get(page_index))
     }
 
     fn sparse_slot_mut(&mut self, idx: u32) -> Option<&mut u32>
@@ -193,11 +249,11 @@ impl<T> SparseSet<T>
         idx % SPARSE_SET_SIZE as u32
     }
 
-    fn page_for_mut(&mut self, idx: u32) -> Option<&mut [u32; SPARSE_SET_SIZE]>
-    {
-        let p: u32 = self.get_page_index(idx);
-        self.sparse.get_mut(p as usize).map(|page| &mut **page)
-    }
+    // fn page_for_mut(&mut self, idx: u32) -> Option<&mut [u32; SPARSE_SET_SIZE]>
+    // {
+    //     let p: u32 = self.get_page_index(idx);
+    //     self.sparse.get_mut(p as usize).map(|page| &mut **page)
+    // }
 
     fn page_for(&self, idx: u32) -> Option<&[u32; SPARSE_SET_SIZE]>
     {
