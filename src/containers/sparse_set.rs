@@ -1,7 +1,4 @@
-use crate::{
-    manager::entity_manager::EntityManager,
-    types::{get_entity_index, Entity, NPOS, SPARSE_SET_SIZE},
-};
+use crate::types::{get_entity_index, Entity, NPOS, SPARSE_SET_SIZE};
 
 pub struct SparseSet<T>
 {
@@ -26,13 +23,8 @@ impl<T> SparseSet<T>
         &self.sparse
     }
 
-    pub fn insert(&mut self, entity_manager: &EntityManager, e: Entity, component: T)
+    pub fn insert(&mut self, e: Entity, component: T)
     {
-        if !entity_manager.is_alive(e)
-        {
-            eprintln!("Cannot assign to Dead Entity");
-        }
-
         let idx = get_entity_index(e);
 
         let dense_length = self.dense.len();
@@ -66,19 +58,17 @@ impl<T> SparseSet<T>
         }
     }
 
-    pub fn remove(&mut self, e: Entity, entity_manager: &EntityManager)
+    pub fn remove(&mut self, e: Entity)
     {
-        if !entity_manager.is_alive(e)
-        {
-            eprintln!("Cannot assign to Dead Entity");
-        }
-
         let idx = get_entity_index(e);
-        let last = self
-            .dense
-            .len()
-            .checked_sub(1)
-            .expect("Unsigned type is < 0");
+        let last = match self.dense.len().checked_sub(1)
+        {
+            Some(x) => x,
+            None =>
+            {
+                return;
+            }
+        };
 
         {
             let slot = match self.sparse_slot(idx).copied()
@@ -115,14 +105,8 @@ impl<T> SparseSet<T>
             .unwrap_or(false)
     }
 
-    pub fn get(&self, e: Entity, entity_manager: &EntityManager) -> Option<&T>
+    pub fn get(&self, e: Entity) -> Option<&T>
     {
-        if !entity_manager.is_alive(e)
-        {
-            eprintln!("Cannot assign to Dead Entity");
-            return None;
-        }
-
         let idx = get_entity_index(e);
         let offset = self.get_page_offset(idx) as usize;
 
@@ -141,14 +125,8 @@ impl<T> SparseSet<T>
         self.dense.get(page_position as usize)
     }
 
-    pub fn get_mut(&mut self, e: Entity, entity_manager: &EntityManager) -> Option<&mut T>
+    pub fn get_mut(&mut self, e: Entity) -> Option<&mut T>
     {
-        if !entity_manager.is_alive(e)
-        {
-            eprintln!("Cannot assign to Dead Entity");
-            return None;
-        }
-
         let idx = get_entity_index(e);
         let offset = self.get_page_offset(idx) as usize;
 
