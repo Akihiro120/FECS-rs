@@ -1,0 +1,3 @@
+struct EntityManager {}
+
+impl EntityManager {}
