@@ -5,7 +5,7 @@ const VERSION_BITS: u32 = 12;
 const INDEX_MASK: u32 = (1u32 << INDEX_BITS) - 1;
 const VERSION_MASK: u32 = ((1u32 << VERSION_BITS) - 1) << INDEX_BITS;
 
-struct EntityBuilder {
+pub struct EntityBuilder {
     index: u32,
     version: u32,
 }
@@ -32,10 +32,9 @@ impl EntityBuilder {
 
     pub fn build(&self) -> Result<Entity, EntityError> {
         if self.index > INDEX_MASK {
-            return Err(EntityError::IndexTooLarge {
+            return Err(EntityError::IndexOverflow {
                 got: self.index,
                 max: INDEX_MASK,
-                bits: INDEX_BITS,
             });
         }
 
@@ -43,7 +42,6 @@ impl EntityBuilder {
             return Err(EntityError::VersionTooLarge {
                 got: self.version,
                 max: INDEX_MASK,
-                bits: INDEX_BITS,
             });
         }
 
@@ -52,7 +50,7 @@ impl EntityBuilder {
     }
 }
 
-struct Entity {
+pub struct Entity {
     id: u32,
 }
 
