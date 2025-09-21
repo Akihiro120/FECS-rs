@@ -1,0 +1,10 @@
+chain_width = 60
+hard_tabs = false
+
+brace_style = "AlwaysNextLine"
+control_brace_style = "AlwaysNextLine"
+combine_control_expr = false
+empty_item_single_line = false
+force_multiline_blocks = true
+imports_indent = "Block"
+indent_style = "Block"
