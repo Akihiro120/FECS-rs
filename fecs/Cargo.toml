@@ -1,0 +1,7 @@
+[package]
+name = "fecs"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+fecs_derive = { path = "../fecs_derive/" }
