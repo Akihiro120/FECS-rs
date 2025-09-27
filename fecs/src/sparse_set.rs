@@ -2,7 +2,7 @@ use crate::component::Component;
 
 const NPOS: usize = usize::MAX;
 
-struct SparseSet<T>
+pub struct SparseSet<T>
 {
     sparse: Vec<usize>,
     dense: Vec<T>,
