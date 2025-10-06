@@ -1,3 +1,5 @@
+use crate::allocator_error::AllocatorError;
+
 pub struct EntityAllocator
 {
     next_id: usize,
@@ -22,7 +24,7 @@ impl EntityAllocator
         }
     }
 
-    pub fn create(&mut self) -> Result<usize, ()>
+    pub fn create(&mut self) -> Result<usize, AllocatorError>
     {
         if let Some(free_id) = self.free_ids.pop()
         {
@@ -36,7 +38,7 @@ impl EntityAllocator
         }
     }
 
-    pub fn destroy(&mut self, id: usize) -> Result<(), ()>
+    pub fn destroy(&mut self, id: usize) -> Result<(), AllocatorError>
     {
         self.free_ids.push(id);
         Ok(())

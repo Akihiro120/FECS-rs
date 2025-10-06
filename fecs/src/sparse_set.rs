@@ -1,4 +1,5 @@
 use crate::component::Component;
+use crate::sparse_error::SparseSetError;
 
 const NPOS: usize = usize::MAX;
 
@@ -22,7 +23,7 @@ where
         }
     }
 
-    pub fn insert(&mut self, id: usize, component: T) -> Result<(), ()>
+    pub fn insert(&mut self, id: usize, component: T) -> Result<(), SparseSetError>
     {
         self.sparse.resize(id + 1, NPOS);
 
@@ -43,13 +44,13 @@ where
         Ok(())
     }
 
-    pub fn remove(&mut self, id: usize) -> Result<(), ()>
+    pub fn remove(&mut self, id: usize) -> Result<(), SparseSetError>
     {
         let sparse_idx = self.sparse[id];
 
         if sparse_idx == NPOS
         {
-            return Err(());
+            return Err(SparseSetError::InvalidPosition);
         }
 
         let last = self.dense.len() - 1;
@@ -87,12 +88,30 @@ where
     {
         self.dense.len()
     }
+
+    pub fn reserve(&mut self, len: usize)
+    {
+        self.sparse.reserve(len);
+        self.dense.reserve(len);
+        self.dense_entities.reserve(len);
+    }
+
+    pub fn has(&self, id: usize) -> bool
+    {
+        self.sparse.get(id).is_some_and(|&s| s != NPOS)
+    }
+
+    pub fn entities(&self) -> &Vec<usize>
+    {
+        &self.dense_entities
+    }
 }
 
 #[cfg(test)]
 mod tests
 {
     use crate::component::Component;
+    use crate::sparse_error::SparseSetError;
     use crate::sparse_set::SparseSet;
 
     #[derive(Component, Debug, PartialEq)]
@@ -124,7 +143,7 @@ mod tests
         assert_eq!(sparse.len(), 1);
         assert_eq!(sparse.remove(id), Ok(()));
         assert_eq!(sparse.len(), 0);
-        assert_eq!(sparse.remove(id), Err(()));
+        assert_eq!(sparse.remove(id), Err(SparseSetError::InvalidPosition));
         assert_eq!(sparse.get(id), None);
     }
 }
